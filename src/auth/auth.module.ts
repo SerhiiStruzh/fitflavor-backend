@@ -7,6 +7,9 @@ import { UserModule } from 'src/user/user.module';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AccessTokenStrategy } from './strategies/access-token.strategy';
+import { JwtAuthGuard } from './guards/jwtAuthGuard.guard';
+import { SequelizeModule } from '@nestjs/sequelize';
+import { RefreshToken } from './models/refreshToken.model';
 
 @Module({
   imports: [
@@ -19,8 +22,10 @@ import { AccessTokenStrategy } from './strategies/access-token.strategy';
         signOptions: { expiresIn: config.get<string>('jwt.access_expiration') },
       }),
     }),
+    SequelizeModule.forFeature([RefreshToken])
   ],
   controllers: [AuthController],
-  providers: [GoogleStrategy, AuthService, AccessTokenStrategy],
+  providers: [GoogleStrategy, AuthService, AccessTokenStrategy, JwtAuthGuard],
+  exports: [JwtAuthGuard]
 })
 export class AuthModule {}

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
-import { User } from './model/user.model';
+import { User } from './models/user.model';
+import { UpdateUserDto } from './dto/updateUserDTO.dto';
 
 @Injectable()
 export class UserService {
@@ -26,10 +27,14 @@ export class UserService {
   }
 
   async findUserByEmail(email: string): Promise<User> {
-    return this.userModel.findOne({where: {email}});
+    const user = await this.userModel.findOne({ where: { email } });
+    if (!user) {
+      throw new NotFoundException(`User with email ${email} not found`);
+    }
+    return user;
   }
 
-  async updateUser(id: number, updateData: Partial<User>): Promise<User> {
+  async updateUser(id: number, updateData: UpdateUserDto): Promise<User> {
     const user = await this.findUserById(id);
     await user.update(updateData);
     return user;

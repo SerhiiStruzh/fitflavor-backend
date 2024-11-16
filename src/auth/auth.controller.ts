@@ -2,7 +2,6 @@ import { Controller, Get, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/
 import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { Request, Response } from 'express';
-import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
@@ -17,41 +16,21 @@ export class AuthController {
   @Get('google/redirect')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
-    const user = req.user;
-    const userId = req.user.id;
-    const accessToken = await this.authService.generateAccessToken(userId);
-    const refreshToken = await this.authService.generateRefreshToken(userId);
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      maxAge: 7 * 24 * 60 * 60 * 1000, 
-    });
-
-    return res.json({ user, accessToken });
+    const {accessToken, refreshToken} = await this.authService.handleAuth(res, req.user.id);
+    return res.json({ user: req.user, accessToken });
   }
 
   @Get('refresh')
   async refresh(@Req() req: Request, @Res() res: Response) {
-    const refreshToken = req.cookies['refreshToken'];
-    if (!refreshToken) {
+    const oldRefreshToken = req.cookies['refreshToken'];
+    if (!oldRefreshToken) {
       return res.status(HttpStatus.FORBIDDEN).json({ message: 'Refresh token not found' });
     }
 
     try {
-      const payload = await this.authService.verifyRefreshToken(refreshToken);
-      const newAccessToken = await this.authService.generateAccessToken(payload.userId);
-      const newRefreshToken = await this.authService.generateRefreshToken(payload.userId);
-
-      res.cookie('refreshToken', newRefreshToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: 'strict',
-        maxAge: 7 * 24 * 60 * 60 * 1000,
-      });
-
-      return res.json({ accessToken: newAccessToken });
+      const payload = await this.authService.verifyRefreshToken(oldRefreshToken);
+      const {accessToken, refreshToken} = await this.authService.handleRefresh(res, payload.userId, oldRefreshToken);
+      return res.json({ accessToken: accessToken });
     } catch (error) {
       return res.status(HttpStatus.FORBIDDEN).json({ message: 'Invalid refresh token' });
     }
