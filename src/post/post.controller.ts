@@ -11,7 +11,7 @@ export class PostController {
 
   @Post()
   async createPost(@Body() createPostDto: CreatePostDTO): Promise<PostModel> {
-    return this.postService.createPost(createPostDto.title, createPostDto.body, createPostDto.userId);
+    return this.postService.createPost(createPostDto);
   }
 
   @Get()

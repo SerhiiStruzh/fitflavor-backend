@@ -9,8 +9,7 @@ import { UserModule } from "src/user/user.module";
 @Module({
     imports: [
         SequelizeModule.forFeature([Post]),
-        AuthModule,
-        UserModule
+        AuthModule
     ],
     controllers: [PostController],
     providers: [PostService]

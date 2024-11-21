@@ -1,4 +1,5 @@
-import { Column, DataType, Model, Table, ForeignKey, PrimaryKey, AutoIncrement, AllowNull, BelongsTo } from 'sequelize-typescript';
+import { Column, DataType, Model, Table, ForeignKey, PrimaryKey, AutoIncrement, AllowNull, BelongsTo, HasMany } from 'sequelize-typescript';
+import { Like } from 'src/like/models/like.model';
 import { User } from 'src/user/models/user.model';
 
 @Table
@@ -25,4 +26,7 @@ export class Post extends Model<Post> {
 
     @BelongsTo(() => User)
     user: User
+
+    @HasMany(() => Like)
+    likes: Like[];
 }

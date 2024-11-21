@@ -4,18 +4,18 @@ import { Post } from './models/post.model';
 import { User } from 'src/user/models/user.model';
 import { UpdatePostDTO } from './dto/updatePostDTO.dto';
 import { UserService } from 'src/user/user.service';
+import { CreatePostDTO } from './dto/createPostDTO.dto';
 
 @Injectable()
 export class PostService {
   constructor(
     @InjectModel(Post)
     private readonly postModel: typeof Post,
-    private readonly userService: UserService
   ) {}
 
-  async createPost(title: string, body: string, userId: number): Promise<Post> {
-    await this.userService.findUserById(userId);
-    return this.postModel.create({ title, body, userId });
+  async createPost(createPostDto: CreatePostDTO): Promise<Post> {
+    // await this.userService.findUserById(createPostDto.userId);
+    return this.postModel.create(createPostDto);
   }
 
   async findAllPosts(): Promise<Post[]> {
