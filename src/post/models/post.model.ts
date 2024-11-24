@@ -1,4 +1,5 @@
 import { Column, DataType, Model, Table, ForeignKey, PrimaryKey, AutoIncrement, AllowNull, BelongsTo, HasMany } from 'sequelize-typescript';
+import { Comment } from 'src/comment/models/comment.model';
 import { Like } from 'src/like/models/like.model';
 import { User } from 'src/user/models/user.model';
 
@@ -29,4 +30,7 @@ export class Post extends Model<Post> {
 
     @HasMany(() => Like)
     likes: Like[];
+
+    @HasMany(() => Comment)
+    comments: Comment[];
 }

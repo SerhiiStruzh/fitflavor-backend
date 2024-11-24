@@ -1,9 +1,10 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, Put } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Put, Req } from '@nestjs/common';
 import { PostService } from './post.service';
 import { Post as PostModel } from './models/post.model';
 import { UpdatePostDTO } from './dto/updatePostDTO.dto';
 import { CreatePostDTO } from './dto/createPostDTO.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwtAuthGuard.guard';
+import { OptionalJwtAuthGuard } from 'src/auth/guards/optionalJwtAuthGuard.guard';
 
 @Controller('posts')
 export class PostController {
@@ -15,7 +16,11 @@ export class PostController {
   }
 
   @Get()
-  async getAllPosts(): Promise<PostModel[]> {
+  @UseGuards(OptionalJwtAuthGuard)
+  async getAllPosts(@Req() req: Request): Promise<PostModel[]> {
+    if(req['user']){
+      return this.postService.findAllPostsForAuthUser(req['user'].userId);
+    }
     return this.postService.findAllPosts();
   }
 

@@ -1,5 +1,6 @@
 import { Column, Model, Table, PrimaryKey, AutoIncrement, Unique, HasMany, HasOne } from 'sequelize-typescript';
 import { RefreshToken } from 'src/auth/models/refreshToken.model';
+import { Comment } from 'src/comment/models/comment.model';
 import { Like } from 'src/like/models/like.model';
 import { Post } from 'src/post/models/post.model';
 
@@ -33,4 +34,7 @@ export class User extends Model<User> {
 
   @HasMany(() => Like)
   likes: Like[];
+
+  @HasMany(() => Comment)
+  comments: Comment[];
 }

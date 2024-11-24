@@ -1,8 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/sequelize";
 import { Like } from "./models/like.model";
 
 import { ValidationError } from "sequelize";
+import { Post } from "src/post/models/post.model";
 
 
 @Injectable()
@@ -29,19 +30,33 @@ export class LikeService {
     }
   }
 
-  async remove(id: number): Promise<void> {
+  async remove(userId: number, id: number): Promise<void> {
     const like = await this.likeModel.findByPk(id);
     if (!like) {
       throw new NotFoundException(`Like with ID ${id} not found`);
     }
+
+    if (like.userId !== userId) {
+      throw new ForbiddenException('You do not have permission to delete this like');
+    }
+
     await like.destroy();
   }
 
-  async findByPost(postId: number): Promise<Like[]> {
-    return this.likeModel.findAll({ where: { postId }});
+  async countLikesOnPost(postId: number): Promise<number> {
+    return this.likeModel.count({
+      where:{
+        postId: postId
+      }
+    })
   }
 
-  async findByUser(userId: number): Promise<Like[]> {
-    return this.likeModel.findAll({ where: { userId }});
+  async getLikedPostsByUserId(userId: number): Promise<Post[]> {
+    const likes = await this.likeModel.findAll({
+      where: { userId },
+      include: [Post], 
+    });
+
+    return likes.map((like) => like.post);
   }
 }

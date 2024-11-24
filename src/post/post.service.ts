@@ -5,6 +5,7 @@ import { User } from 'src/user/models/user.model';
 import { UpdatePostDTO } from './dto/updatePostDTO.dto';
 import { UserService } from 'src/user/user.service';
 import { CreatePostDTO } from './dto/createPostDTO.dto';
+import { Sequelize } from 'sequelize';
 
 @Injectable()
 export class PostService {
@@ -14,7 +15,6 @@ export class PostService {
   ) {}
 
   async createPost(createPostDto: CreatePostDTO): Promise<Post> {
-    // await this.userService.findUserById(createPostDto.userId);
     return this.postModel.create(createPostDto);
   }
 
@@ -46,4 +46,23 @@ export class PostService {
       where: { userId }
     });
   }
+
+  async findAllPostsForAuthUser(userId: number): Promise<any[]> {
+    const posts = await this.postModel.findAll({
+      attributes: [
+        "id",
+        "title",
+        "body",
+        [
+          Sequelize.literal(`CASE WHEN EXISTS (
+            SELECT 1 FROM "Likes" l WHERE l."postId" = "Post".id AND l."userId" = ${userId}
+          ) THEN true ELSE false END`),
+          "isLiked",
+        ],
+      ],
+    });
+  
+    return posts;
+  }
+  
 }
