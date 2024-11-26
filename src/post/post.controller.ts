@@ -5,6 +5,7 @@ import { UpdatePostDTO } from './dto/updatePostDTO.dto';
 import { CreatePostDTO } from './dto/createPostDTO.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwtAuthGuard.guard';
 import { OptionalJwtAuthGuard } from 'src/auth/guards/optionalJwtAuthGuard.guard';
+import { PostResponseDTO } from './dto/postResponseDTO.dto';
 
 @Controller('posts')
 export class PostController {
@@ -17,16 +18,14 @@ export class PostController {
 
   @Get()
   @UseGuards(OptionalJwtAuthGuard)
-  async getAllPosts(@Req() req: Request): Promise<PostModel[]> {
-    if(req['user']){
-      return this.postService.findAllPostsForAuthUser(req['user'].userId);
-    }
-    return this.postService.findAllPosts();
+  async getAllPosts(@Req() req: Request): Promise<PostResponseDTO[]> {
+    return this.postService.findAllPosts(req['user']?.userId);
   }
 
   @Get(':id')
-  async getPostById(@Param('id') id: number): Promise<PostModel> {
-    return this.postService.findPostById(id);
+  @UseGuards(OptionalJwtAuthGuard)
+  async getPostById(@Req() req: Request, @Param('id') id: number): Promise<PostResponseDTO> {
+    return this.postService.findPostById(id, req['user']?.userId);
   }
 
   @Put(':id')
@@ -43,7 +42,8 @@ export class PostController {
   }
 
   @Get('user/:userId')
-  async getPostsByUserId(@Param('userId') userId: number): Promise<PostModel[]> {
-    return this.postService.findPostsByUserId(userId);
+  @UseGuards(OptionalJwtAuthGuard)
+  async getUserPosts(@Req() req: Request, @Param('userId') userId: number): Promise<PostResponseDTO[]> {
+    return this.postService.findPostsByUserId(userId, req['user']?.userId);
   }
 }

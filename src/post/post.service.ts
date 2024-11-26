@@ -6,6 +6,7 @@ import { UpdatePostDTO } from './dto/updatePostDTO.dto';
 import { UserService } from 'src/user/user.service';
 import { CreatePostDTO } from './dto/createPostDTO.dto';
 import { Sequelize } from 'sequelize';
+import { PostResponseDTO } from './dto/postResponseDTO.dto';
 
 @Injectable()
 export class PostService {
@@ -18,11 +19,7 @@ export class PostService {
     return this.postModel.create(createPostDto);
   }
 
-  async findAllPosts(): Promise<Post[]> {
-    return this.postModel.findAll();
-  }
-
-  async findPostById(id: number): Promise<Post> {
+  async getPostById(id: number): Promise<Post> {
     const post = await this.postModel.findByPk(id, { include: [User] });
     if (!post) {
       throw new NotFoundException(`Post with ID ${id} not found`);
@@ -30,39 +27,138 @@ export class PostService {
     return post;
   }
 
+  async findPostById(id: number, userId?: number): Promise<PostResponseDTO> {
+    const attributes = this.getAttributes(userId);
+  
+    const post: any = await this.postModel.findOne({
+      where: { id },
+      attributes,
+      include: [
+        {
+          model: User,
+          attributes: ["id", "name"],
+        },
+      ],
+    });
+  
+    if (!post) {
+      throw new NotFoundException(`Post with ID ${id} not found`);
+    }
+  
+    return new PostResponseDTO(
+      post.id,
+      post.title,
+      post.body,
+      post.user.name,
+      post.user.id,
+      parseInt(post.getDataValue("likesAmount"), 10),
+      userId ? post.getDataValue("isLiked") : false,
+      userId ? post.user.id === userId : false
+    );
+  }
+  
+
   async updatePost(id: number, updateData: UpdatePostDTO): Promise<Post> {
-    const post = await this.findPostById(id);
+    const post = await this.getPostById(id);
     await post.update(updateData);
     return post;
   }
 
   async deletePost(id: number): Promise<void> {
-    const post = await this.findPostById(id);
+    const post = await this.getPostById(id);
     await post.destroy();
   }
 
-  async findPostsByUserId(userId: number): Promise<Post[]> {
-    return this.postModel.findAll({
-      where: { userId }
-    });
-  }
+  // async findPostsByUserId(userId: number): Promise<Post[]> {
+  //   return this.postModel.findAll({
+  //     where: { userId }
+  //   });
+  // }  
 
-  async findAllPostsForAuthUser(userId: number): Promise<any[]> {
+  async findPostsByUserId(userId: number, currentUserId?: number): Promise<PostResponseDTO[]> {
+    const attributes = this.getAttributes(currentUserId);
+  
     const posts = await this.postModel.findAll({
-      attributes: [
-        "id",
-        "title",
-        "body",
-        [
-          Sequelize.literal(`CASE WHEN EXISTS (
-            SELECT 1 FROM "Likes" l WHERE l."postId" = "Post".id AND l."userId" = ${userId}
-          ) THEN true ELSE false END`),
-          "isLiked",
-        ],
+      where: { userId },
+      attributes,
+      include: [
+        {
+          model: User,
+          attributes: ["id", "name"],
+        },
       ],
     });
   
-    return posts;
+    return posts.map(
+      (post: any) =>
+        new PostResponseDTO(
+          post.id,
+          post.title,
+          post.body,
+          post.user.name,
+          post.user.id,
+          parseInt(post.getDataValue("likesAmount"), 10),
+          currentUserId ? post.getDataValue("isLiked") : false,
+          currentUserId ? post.user.id === currentUserId : false
+        )
+    );
   }
   
+
+  async findAllPosts(userId?: number): Promise<PostResponseDTO[]> {
+    const attributes = this.getAttributes(userId);
+
+    const posts = await this.postModel.findAll({
+      include: [
+        {
+          model: User,
+          attributes: ["id", "name"],
+        },
+      ],
+      attributes: attributes,
+    });
+
+
+    return posts.map((post: any) => {
+      return new PostResponseDTO(
+        post.id,
+        post.title,
+        post.body,
+        post.user.name, 
+        post.user.id,
+        parseInt(post.getDataValue('likesAmount'), 10), 
+        userId ? post.getDataValue('isLiked') : false, 
+        userId ? post.user.id === userId : false, 
+      );
+    });
+  }
+
+  getAttributes(userId?: number): any[] {
+    const attributes: any[] = [
+      "id",
+      "title",
+      "body",
+      [
+        Sequelize.literal(`(
+          SELECT COUNT(*)
+          FROM "Likes" l
+          WHERE l."postId" = "Post".id
+        )`),
+        "likesAmount",
+      ],
+    ];
+  
+    if (userId) {
+      attributes.push([
+        Sequelize.literal(`EXISTS (
+          SELECT 1
+          FROM "Likes" l
+          WHERE l."postId" = "Post".id AND l."userId" = ${userId}
+        )`),
+        "isLiked",
+      ]);
+    }
+  
+    return attributes;
+  }
 }

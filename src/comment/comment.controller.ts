@@ -31,9 +31,6 @@ export class CommentController {
   @Get('post/:postId')
   @UseGuards(OptionalJwtAuthGuard)
   async getCommentsByPost(@Req() req: Request, @Param('postId') postId: number): Promise<CommentResponseDTO[]> {
-    if(req['user']){
-        return this.commentService.getCommentsByPostForAuthUser(postId, req['user'].userId);
-    }
-    return this.commentService.getCommentsByPost(postId);
+    return this.commentService.getCommentsByPost(postId, req['user']?.userId);
   }
 }
