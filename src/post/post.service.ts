@@ -131,6 +131,38 @@ export class PostService {
     });
   }
 
+  async searchPosts(query: string, userId?: number): Promise<PostResponseDTO[]> {
+    const attributes = this.getAttributes(userId);
+
+    const formattedQuery = query.split(/\s+/)
+                                .map((word) => word.replace(/'/g, "''"))
+                                .join(' | ');
+
+    const posts = await this.postModel.findAll({
+      where: Sequelize.literal(`"search_vector" @@ to_tsquery('simple', '${formattedQuery}') `),
+      attributes,
+      include: [
+        {
+          model: User,
+          attributes: ['id', 'name'],
+        },
+      ],
+    });
+
+    return posts.map((post: any) => {
+      return new PostResponseDTO(
+        post.id,
+        post.title,
+        post.body,
+        post.user.name,
+        post.user.id,
+        parseInt(post.getDataValue('likesAmount'), 10),
+        userId ? post.getDataValue('isLiked') : false,
+        userId ? post.user.id === userId : false,
+      );
+    });
+  }
+
   getAttributes(userId?: number): any[] {
     const attributes: any[] = [
       "id",

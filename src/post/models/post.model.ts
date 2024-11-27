@@ -25,6 +25,12 @@ export class Post extends Model<Post> {
     @Column
     userId: number;
 
+    @Column({
+        type: DataType.TSVECTOR,
+        allowNull: true,
+    })
+    search_vector: string;
+
     @BelongsTo(() => User)
     user: User
 

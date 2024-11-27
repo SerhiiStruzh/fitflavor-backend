@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Delete, UseGuards, Put, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete, UseGuards, Put, Req, Query } from '@nestjs/common';
 import { PostService } from './post.service';
 import { Post as PostModel } from './models/post.model';
 import { UpdatePostDTO } from './dto/updatePostDTO.dto';
@@ -15,6 +15,12 @@ export class PostController {
   @UseGuards(JwtAuthGuard)
   async createPost(@Req() req: Request, @Body() createPostDto: CreatePostDTO): Promise<PostModel> {
     return this.postService.createPost(req['user'].userId, createPostDto);
+  }
+
+  @Get('search')
+  @UseGuards(OptionalJwtAuthGuard)
+  async searchPosts(@Req() req: Request, @Query('q') query: string): Promise<PostResponseDTO[]> {
+    return this.postService.searchPosts(query, req['user']?.userId);
   }
 
   @Get()
