@@ -8,8 +8,4 @@ export class CreatePostDTO {
   @IsNotEmpty()
   @IsString()
   body: string;
-
-  @IsNotEmpty()
-  @IsInt()
-  userId: number;
 }

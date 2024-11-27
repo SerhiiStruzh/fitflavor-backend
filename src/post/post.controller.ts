@@ -12,8 +12,9 @@ export class PostController {
   constructor(private readonly postService: PostService) {}
 
   @Post()
-  async createPost(@Body() createPostDto: CreatePostDTO): Promise<PostModel> {
-    return this.postService.createPost(createPostDto);
+  @UseGuards(JwtAuthGuard)
+  async createPost(@Req() req: Request, @Body() createPostDto: CreatePostDTO): Promise<PostModel> {
+    return this.postService.createPost(req['user'].userId, createPostDto);
   }
 
   @Get()
@@ -29,16 +30,19 @@ export class PostController {
   }
 
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   async updatePost(
+    @Req() req: Request,
     @Param('id') id: number,
     @Body() updateData: UpdatePostDTO
   ): Promise<PostModel> {
-    return this.postService.updatePost(id, updateData);
+    return this.postService.updatePost(id, req['user'].userId, updateData);
   }
 
   @Delete(':id')
-  async deletePost(@Param('id') id: number): Promise<void> {
-    await this.postService.deletePost(id);
+  @UseGuards(JwtAuthGuard)
+  async deletePost(@Req() req: Request, @Param('id') id: number): Promise<void> {
+    await this.postService.deletePost(id, req['user'].userId);
   }
 
   @Get('user/:userId')

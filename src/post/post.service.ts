@@ -1,9 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { Post } from './models/post.model';
 import { User } from 'src/user/models/user.model';
 import { UpdatePostDTO } from './dto/updatePostDTO.dto';
-import { UserService } from 'src/user/user.service';
 import { CreatePostDTO } from './dto/createPostDTO.dto';
 import { Sequelize } from 'sequelize';
 import { PostResponseDTO } from './dto/postResponseDTO.dto';
@@ -15,12 +14,12 @@ export class PostService {
     private readonly postModel: typeof Post,
   ) {}
 
-  async createPost(createPostDto: CreatePostDTO): Promise<Post> {
-    return this.postModel.create(createPostDto);
+  async createPost(userId: number, createPostDto: CreatePostDTO): Promise<Post> {
+    return this.postModel.create({...createPostDto, userId});
   }
 
   async getPostById(id: number): Promise<Post> {
-    const post = await this.postModel.findByPk(id, { include: [User] });
+    const post = await this.postModel.findByPk(id);
     if (!post) {
       throw new NotFoundException(`Post with ID ${id} not found`);
     }
@@ -56,24 +55,23 @@ export class PostService {
       userId ? post.user.id === userId : false
     );
   }
-  
 
-  async updatePost(id: number, updateData: UpdatePostDTO): Promise<Post> {
+  async updatePost(id: number, userId: number, updateData: UpdatePostDTO): Promise<Post> {
     const post = await this.getPostById(id);
+    if (post.userId !== userId) {
+      throw new ForbiddenException(`You do not have permission to edit this post`);
+    }
     await post.update(updateData);
     return post;
   }
 
-  async deletePost(id: number): Promise<void> {
+  async deletePost(id: number, userId: number): Promise<void> {
     const post = await this.getPostById(id);
+    if (post.userId !== userId) {
+      throw new ForbiddenException(`You do not have permission to delete this post`);
+    }
     await post.destroy();
   }
-
-  // async findPostsByUserId(userId: number): Promise<Post[]> {
-  //   return this.postModel.findAll({
-  //     where: { userId }
-  //   });
-  // }  
 
   async findPostsByUserId(userId: number, currentUserId?: number): Promise<PostResponseDTO[]> {
     const attributes = this.getAttributes(currentUserId);

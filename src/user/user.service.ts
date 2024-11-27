@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/sequelize';
 import { User } from './models/user.model';
 import { UpdateUserDto } from './dto/updateUserDTO.dto';
+import { UserResponseDTO } from './dto/userResponseDTO.dto';
 
 @Injectable()
 export class UserService {
@@ -18,7 +19,18 @@ export class UserService {
     return this.userModel.findAll();
   }
 
-  async findUserById(id: number): Promise<User> {
+  async findUserById(id: number, currentUserId?: number): Promise<UserResponseDTO> {
+    const user = await this.getUserById(id);
+    return new UserResponseDTO(
+      user.id,
+      user.name,
+      user.picture,
+      user.linktree,
+      currentUserId ? user.id === currentUserId : false
+    );
+  }
+
+  async getUserById(id: number): Promise<User> {
     const user = await this.userModel.findByPk(id);
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
@@ -34,14 +46,23 @@ export class UserService {
     return user;
   }
 
-  async updateUser(id: number, updateData: UpdateUserDto): Promise<User> {
-    const user = await this.findUserById(id);
+  async updateUser(id: number, currentUserId: number, updateData: UpdateUserDto): Promise<UserResponseDTO> {
+    const user = await this.getUserById(id);
+    if (user.id !== currentUserId) {
+      throw new ForbiddenException(`You do not have permission to update this user`);
+    }
     await user.update(updateData);
-    return user;
+    return new UserResponseDTO(
+      user.id,
+      user.name,
+      user.picture,
+      user.linktree,
+      true 
+    );
   }
 
   async deleteUser(id: number): Promise<void> {
-    const user = await this.findUserById(id);
+    const user = await this.getUserById(id);
     await user.destroy();
   }
 }

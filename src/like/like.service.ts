@@ -4,6 +4,8 @@ import { Like } from "./models/like.model";
 
 import { ValidationError } from "sequelize";
 import { Post } from "src/post/models/post.model";
+import { PostResponseDTO } from "src/post/dto/postResponseDTO.dto";
+import { User } from "src/user/models/user.model";
 
 
 @Injectable()
@@ -51,12 +53,43 @@ export class LikeService {
     })
   }
 
-  async getLikedPostsByUserId(userId: number): Promise<Post[]> {
+  async getLikedPostsByUserId(
+    userId: number,
+    currentUserId?: number
+  ): Promise<PostResponseDTO[]> {
     const likes = await this.likeModel.findAll({
       where: { userId },
-      include: [Post], 
+      include: [Post],
     });
+  
+    const posts = likes.map((like) => like.post);
 
-    return likes.map((like) => like.post);
+    return Promise.all(
+      posts.map(async (post) => {
+        const likesAmount = await this.likeModel.count({
+          where: { postId: post.id },
+        });
+  
+        const isLiked = currentUserId
+        ? !!(await this.likeModel.findOne({
+            where: { postId: post.id, userId: currentUserId },
+          }))
+        : false;
+  
+        const isAuthor = post.userId === currentUserId;
+  
+        return new PostResponseDTO(
+          post.id,
+          post.title,
+          post.body,
+          post.user?.name,
+          post.userId,
+          likesAmount,
+          isLiked,
+          isAuthor
+        );
+      })
+    );
   }
+  
 }

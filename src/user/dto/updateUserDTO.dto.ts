@@ -4,13 +4,13 @@ export class UpdateUserDto {
     @IsOptional()
     @IsString()
     @IsNotEmpty()
-    name: string;
+    name?: string;
 
     @IsOptional()
     @IsString()
-    picture: string;
+    picture?: string;
 
     @IsOptional()
     @IsString()
-    linktree: string;
+    linktree?: string;
 }
