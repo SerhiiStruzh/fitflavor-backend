@@ -18,7 +18,7 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const {accessToken, refreshToken} = await this.authService.handleAuth(res, req.user.id);
-    return res.json({ user: req.user, accessToken });
+    res.redirect(`http://localhost:80/auth/google?token=${accessToken}`);
   }
 
   @Get('refresh')
