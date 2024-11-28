@@ -36,4 +36,25 @@ export class AuthController {
       return res.status(HttpStatus.FORBIDDEN).json({ message: 'Invalid refresh token' });
     }
   }
+
+  @Post('logout')
+  async logout(@Req() req: Request, @Res() res: Response) {
+    const refreshToken = req.cookies['refreshToken'];
+    if (!refreshToken) {
+      return res.status(HttpStatus.BAD_REQUEST).json({ message: 'No refresh token found' });
+    }
+    try {
+      await this.authService.invalidateRefreshToken(refreshToken);
+
+      res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'strict',
+      });
+      return res.status(HttpStatus.OK).json({ message: 'Successfully logged out' });
+    } catch (error) {
+      return res.status(HttpStatus.INTERNAL_SERVER_ERROR).json({ message: 'Error during logout' });
+    }
+  }
+
 }

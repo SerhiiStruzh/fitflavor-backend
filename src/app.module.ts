@@ -8,6 +8,8 @@ import { UserModule } from './user/user.module';
 import { PostModule } from './post/post.module';
 import { LikeModule } from './like/like.module';
 import { CommentsModule } from './comment/comment.module';
+import { FileController } from './file/file.controller';
+import { FileModule } from './file/file.module';
 
 @Module({
     imports: [
@@ -32,7 +34,8 @@ import { CommentsModule } from './comment/comment.module';
         UserModule,
         PostModule,
         LikeModule,
-        CommentsModule
+        CommentsModule,
+        FileModule,
     ]
 })
 export class AppModule {}
