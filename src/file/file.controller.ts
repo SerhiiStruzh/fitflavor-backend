@@ -1,7 +1,7 @@
 import { Controller, Post, UseInterceptors, UploadedFile, BadRequestException, InternalServerErrorException, UseGuards } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
-import { extname } from 'path';
+import { extname, join } from 'path';
 import { JwtAuthGuard } from 'src/auth/guards/jwtAuthGuard.guard';
 
 @Controller('files')
@@ -32,8 +32,7 @@ export class FileController {
     try {
       console.log(file);
       return {
-        originalname: file.originalname,
-        filename: file.filename,
+        filepath: join(process.cwd(), file.path)
       };
     } catch (error) {
       throw new InternalServerErrorException('An error occurred while processing the file');
