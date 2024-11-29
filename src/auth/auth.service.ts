@@ -36,7 +36,7 @@ import {
       } catch (error) {
         if (error instanceof NotFoundException) {
           user = await this.userService.createUser(
-            `${name.givenName} ${name.familyName}`,
+            `${name.givenName} ${name.familyName || ''}`,
             emails[0].value,
             photos[0].value,
           );

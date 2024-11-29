@@ -5,6 +5,7 @@ import { JwtAuthGuard } from 'src/auth/guards/jwtAuthGuard.guard';
 import { Request, Response } from 'express';
 import { UserResponseDTO } from './dto/userResponseDTO.dto';
 import { OptionalJwtAuthGuard } from 'src/auth/guards/optionalJwtAuthGuard.guard';
+import { ConfigService } from '@nestjs/config';
 
 
 @Controller('users')
@@ -13,8 +14,9 @@ export class UserController {
 
   @Get('profile')
   @UseGuards(JwtAuthGuard)
-  async getUserProfile(@Req() req : Request, @Res() res : Response){
-    res.redirect(`http://localhost:80/users/user/${req['user'].userId}`);
+  async getUserProfile(@Req() req : Request){
+    const userId = req['user'].userId;
+    return { userId }
   }
 
   @Get(':id')

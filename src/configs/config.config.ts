@@ -16,5 +16,8 @@ export default () => ({
         access_expiration: process.env.JWT_EXPIRATION,
         refresh_secret: process.env.REFRESH_SECRET,
         refresh_expiration: process.env.REFRESH_EXPIRATION,
-    }
+    },
+    frontend: {
+        base_url: process.env.FRONTEND_BASE_URL,
+    },
 });

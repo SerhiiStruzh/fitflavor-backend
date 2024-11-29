@@ -3,11 +3,14 @@ import { AuthGuard } from '@nestjs/passport';
 import { AuthService } from './auth.service';
 import { Request, Response } from 'express';
 import { JwtAuthGuard } from './guards/jwtAuthGuard.guard';
+import { ConfigService } from '@nestjs/config';
 
 @Controller('auth')
 export class AuthController {
 
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService,
+              private readonly configService: ConfigService
+  ) {}
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
@@ -18,10 +21,10 @@ export class AuthController {
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     const {accessToken, refreshToken} = await this.authService.handleAuth(res, req.user.id);
-    res.redirect(`http://localhost:80/auth/google?token=${accessToken}`);
+    res.redirect(`${this.configService.get('frontend.base_url')}/auth/google?token=${accessToken}`);
   }
 
-  @Get('refresh')
+  @Post('refresh')
   async refresh(@Req() req: Request, @Res() res: Response) {
     const oldRefreshToken = req.cookies['refreshToken'];
     if (!oldRefreshToken) {
@@ -38,6 +41,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @UseGuards(JwtAuthGuard)
   async logout(@Req() req: Request, @Res() res: Response) {
     const refreshToken = req.cookies['refreshToken'];
     if (!refreshToken) {
