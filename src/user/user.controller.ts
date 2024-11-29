@@ -1,10 +1,8 @@
-import { Controller, Get, Post, Body, Param, Put, Delete, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Body, Param, Put, UseGuards, Req, Res } from '@nestjs/common';
 import { UserService } from './user.service';
-import { User } from './models/user.model'; 
-import { CreateUserDto } from './dto/createUserDTO.dto';
 import { UpdateUserDto } from './dto/updateUserDTO.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwtAuthGuard.guard';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { UserResponseDTO } from './dto/userResponseDTO.dto';
 import { OptionalJwtAuthGuard } from 'src/auth/guards/optionalJwtAuthGuard.guard';
 
@@ -13,15 +11,11 @@ import { OptionalJwtAuthGuard } from 'src/auth/guards/optionalJwtAuthGuard.guard
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  // @Post()
-  // async create(@Body() createUserDto: CreateUserDto): Promise<User> {
-  //   return this.userService.createUser(createUserDto.name, createUserDto.email, createUserDto.picture);
-  // }
-
-  // @Get()
-  // async findAll(): Promise<User[]> {
-  //   return this.userService.findAllUsers();
-  // }
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  async getUserProfile(@Req() req : Request, @Res() res : Response){
+    res.redirect(`http://localhost:80/users/user/${req['user'].userId}`);
+  }
 
   @Get(':id')
   @UseGuards(OptionalJwtAuthGuard)
