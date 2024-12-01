@@ -34,9 +34,9 @@ export class Post extends Model<Post> {
     @BelongsTo(() => User)
     user: User
 
-    @HasMany(() => Like)
+    @HasMany(() => Like, { onDelete: 'CASCADE' })
     likes: Like[];
 
-    @HasMany(() => Comment)
+    @HasMany(() => Comment, { onDelete: 'CASCADE' })
     comments: Comment[];
 }
