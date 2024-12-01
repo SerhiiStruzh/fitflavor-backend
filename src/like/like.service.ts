@@ -68,7 +68,14 @@ export class LikeService {
       [Sequelize.col('post.userId'), 'author_id'],
       [Sequelize.col('post->user.name'), 'author_name'],
       [Sequelize.col('post->user.picture'), 'author_picture'],
-      [Sequelize.fn('COUNT', Sequelize.col('Like.id')), 'likesAmount'], 
+      [
+        Sequelize.literal(`(
+          SELECT COUNT("Likes"."id")
+          FROM "Likes"
+          WHERE "Likes"."postId" = "post"."id"
+        )`),
+        'likesAmount',
+      ],
       [Sequelize.fn('COUNT', Sequelize.col('post->comments.id')), 'commentsAmount'],
     ];
   
@@ -89,6 +96,7 @@ export class LikeService {
             {
                 model: Post,
                 as: 'post',
+                attributes: [],
                 include: [
                     {
                         model: User,

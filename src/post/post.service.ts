@@ -76,7 +76,7 @@ export class PostService {
   }
 
   async findPostsByUserId(userId: number, currentUserId?: number): Promise<PostResponseDTO[]> {
-    const attributes = this.getAttributes(userId);
+    const attributes = this.getAttributes(currentUserId);
     const includes = this.getIncludes();
     const groupBy = this.getGroupBy();
 
@@ -98,8 +98,8 @@ export class PostService {
           parseInt(post.getDataValue('likesAmount'), 10),
           parseInt(post.getDataValue('commentsAmount'), 10),
           post.getDataValue('userPicture'),
-          userId ? post.getDataValue('isLiked') : false,
-          userId ? post.userId === userId : false,
+          currentUserId ? post.getDataValue('isLiked') : false,
+          currentUserId ? post.userId === currentUserId : false,
         )
     );
   }

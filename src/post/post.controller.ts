@@ -6,6 +6,7 @@ import { CreatePostDTO } from './dto/createPostDTO.dto';
 import { JwtAuthGuard } from 'src/auth/guards/jwtAuthGuard.guard';
 import { OptionalJwtAuthGuard } from 'src/auth/guards/optionalJwtAuthGuard.guard';
 import { PostResponseDTO } from './dto/postResponseDTO.dto';
+import { Request } from 'express';
 
 @Controller('posts')
 export class PostController {
