@@ -5,6 +5,8 @@ export class PostResponseDTO {
     username: string;
     userId: number;
     likesAmount: number;
+    commentsAmount: number
+    authorPicture: string;
     isLiked?: boolean = false;
     isAuthor?: boolean = false;
   
@@ -15,6 +17,8 @@ export class PostResponseDTO {
       username: string,
       userId: number,
       likesAmount: number,
+      commentsAmount: number,
+      authorPicture: string,
       isLiked?: boolean,
       isAuthor?: boolean,
     ) {
@@ -24,6 +28,8 @@ export class PostResponseDTO {
       this.username = username;
       this.userId = userId;
       this.likesAmount = likesAmount;
+      this.commentsAmount = commentsAmount;
+      this.authorPicture = authorPicture;
       this.isLiked = isLiked ?? false;
       this.isAuthor = isAuthor ?? false;
     }

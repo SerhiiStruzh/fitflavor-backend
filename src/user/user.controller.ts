@@ -5,7 +5,6 @@ import { JwtAuthGuard } from 'src/auth/guards/jwtAuthGuard.guard';
 import { Request, Response } from 'express';
 import { UserResponseDTO } from './dto/userResponseDTO.dto';
 import { OptionalJwtAuthGuard } from 'src/auth/guards/optionalJwtAuthGuard.guard';
-import { ConfigService } from '@nestjs/config';
 
 
 @Controller('users')

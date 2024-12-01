@@ -2,10 +2,11 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { InjectModel } from "@nestjs/sequelize";
 import { Like } from "./models/like.model";
 
-import { ValidationError } from "sequelize";
 import { Post } from "src/post/models/post.model";
 import { PostResponseDTO } from "src/post/dto/postResponseDTO.dto";
+import { Comment } from "src/comment/models/comment.model";
 import { User } from "src/user/models/user.model";
+import { Sequelize } from "sequelize-typescript";
 
 
 @Injectable()
@@ -56,38 +57,80 @@ export class LikeService {
   async getLikedPostsByUserId(
     userId: number,
     currentUserId?: number
-  ): Promise<PostResponseDTO[]> {
-    const likes = await this.likeModel.findAll({
-      where: { userId },
-      include: [Post],
-    });
+  ): Promise<PostResponseDTO[]> {   
+
+    const attributes : any = [
+      [Sequelize.col('Like.id'), 'likes_id'], 
+      [Sequelize.col('Like.userId'), 'like_userId'], 
+      [Sequelize.col('post.id'), 'post_id'],
+      [Sequelize.col('post.title'), 'post_title'],
+      [Sequelize.col('post.body'), 'post_body'],
+      [Sequelize.col('post.userId'), 'author_id'],
+      [Sequelize.col('post->user.name'), 'author_name'],
+      [Sequelize.col('post->user.picture'), 'author_picture'],
+      [Sequelize.fn('COUNT', Sequelize.col('Like.id')), 'likesAmount'], 
+      [Sequelize.fn('COUNT', Sequelize.col('post->comments.id')), 'commentsAmount'],
+    ];
   
-    const posts = likes.map((like) => like.post);
+    if (currentUserId) {
+        attributes.push([
+          Sequelize.literal(`EXISTS (
+            SELECT 1
+            FROM "Likes" l
+            WHERE l."postId" = "post".id AND l."userId" = ${currentUserId}
+          )`),
+          "isLiked",
+        ]);
+    }
+
+    const liked_posts = await this.likeModel.findAll({
+        attributes,
+        include: [
+            {
+                model: Post,
+                as: 'post',
+                include: [
+                    {
+                        model: User,
+                        as: 'user',
+                        attributes: [],
+                    },
+                    {
+                        model: Comment,
+                        as: 'comments',
+                        attributes: [], 
+                    },
+                ],
+            },
+        ],
+        where: { userId },
+        group: [
+            'likes_id',
+            'post.id',
+            'post.title',
+            'post.body',
+            'post.userId',
+            'post->user.name',
+            'post->user.picture',
+        ], 
+    });
 
     return Promise.all(
-      posts.map(async (post) => {
-        const likesAmount = await this.likeModel.count({
-          where: { postId: post.id },
-        });
-  
-        const isLiked = currentUserId
-        ? !!(await this.likeModel.findOne({
-            where: { postId: post.id, userId: currentUserId },
-          }))
-        : false;
-  
-        const isAuthor = post.userId === currentUserId;
+      liked_posts.map(async (post: any) => {
+        const isAuthor = post.getDataValue('author_id') === currentUserId;
   
         return new PostResponseDTO(
-          post.id,
-          post.title,
-          post.body,
-          post.user?.name,
-          post.userId,
-          likesAmount,
-          isLiked,
+          post.getDataValue('post_id'),
+          post.getDataValue('post_title'),
+          post.getDataValue('post_body'),
+          post.getDataValue('author_name'),
+          post.getDataValue('author_id'),
+          parseInt(post.getDataValue("likesAmount"), 10),
+          parseInt(post.getDataValue("commentsAmount"), 10),
+          post.getDataValue('author_picture'),
+          post.getDataValue('isLiked'),
           isAuthor
-        );
+          );      
       })
     );
   }

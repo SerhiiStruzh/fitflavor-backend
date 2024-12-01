@@ -41,7 +41,6 @@ export class AuthController {
   }
 
   @Post('logout')
-  @UseGuards(JwtAuthGuard)
   async logout(@Req() req: Request, @Res() res: Response) {
     const refreshToken = req.cookies['refreshToken'];
     if (!refreshToken) {

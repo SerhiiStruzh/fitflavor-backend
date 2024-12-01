@@ -4,8 +4,10 @@ import { Post } from './models/post.model';
 import { User } from 'src/user/models/user.model';
 import { UpdatePostDTO } from './dto/updatePostDTO.dto';
 import { CreatePostDTO } from './dto/createPostDTO.dto';
-import { Sequelize } from 'sequelize';
+import { Sequelize } from "sequelize-typescript";
 import { PostResponseDTO } from './dto/postResponseDTO.dto';
+import { Like } from 'src/like/models/like.model';
+import { Comment } from 'src/comment/models/comment.model';
 
 @Injectable()
 export class PostService {
@@ -28,16 +30,14 @@ export class PostService {
 
   async findPostById(id: number, userId?: number): Promise<PostResponseDTO> {
     const attributes = this.getAttributes(userId);
-  
+    const includes = this.getIncludes();
+    const groupBy = this.getGroupBy();
+
     const post: any = await this.postModel.findOne({
       where: { id },
-      attributes,
-      include: [
-        {
-          model: User,
-          attributes: ["id", "name"],
-        },
-      ],
+      include: includes,
+      group: groupBy,
+      attributes: attributes,
     });
   
     if (!post) {
@@ -48,11 +48,13 @@ export class PostService {
       post.id,
       post.title,
       post.body,
-      post.user.name,
-      post.user.id,
-      parseInt(post.getDataValue("likesAmount"), 10),
-      userId ? post.getDataValue("isLiked") : false,
-      userId ? post.user.id === userId : false
+      post.getDataValue('userName'),
+      post.userId,
+      parseInt(post.getDataValue('likesAmount'), 10),
+      parseInt(post.getDataValue('commentsAmount'), 10),
+      post.getDataValue('userPicture'),
+      userId ? post.getDataValue('isLiked') : false,
+      userId ? post.userId === userId : false,
     );
   }
 
@@ -74,65 +76,66 @@ export class PostService {
   }
 
   async findPostsByUserId(userId: number, currentUserId?: number): Promise<PostResponseDTO[]> {
-    const attributes = this.getAttributes(currentUserId);
-  
+    const attributes = this.getAttributes(userId);
+    const includes = this.getIncludes();
+    const groupBy = this.getGroupBy();
+
     const posts = await this.postModel.findAll({
       where: { userId },
-      attributes,
-      include: [
-        {
-          model: User,
-          attributes: ["id", "name"],
-        },
-      ],
+      include: includes,
+      group: groupBy,
+      attributes: attributes,
     });
-  
+
     return posts.map(
       (post: any) =>
         new PostResponseDTO(
           post.id,
           post.title,
           post.body,
-          post.user.name,
-          post.user.id,
-          parseInt(post.getDataValue("likesAmount"), 10),
-          currentUserId ? post.getDataValue("isLiked") : false,
-          currentUserId ? post.user.id === currentUserId : false
+          post.getDataValue('userName'),
+          post.userId,
+          parseInt(post.getDataValue('likesAmount'), 10),
+          parseInt(post.getDataValue('commentsAmount'), 10),
+          post.getDataValue('userPicture'),
+          userId ? post.getDataValue('isLiked') : false,
+          userId ? post.userId === userId : false,
         )
     );
   }
   
-
   async findAllPosts(userId?: number): Promise<PostResponseDTO[]> {
     const attributes = this.getAttributes(userId);
+    const includes = this.getIncludes();
+    const groupBy = this.getGroupBy();
+
 
     const posts = await this.postModel.findAll({
-      include: [
-        {
-          model: User,
-          attributes: ["id", "name"],
-        },
-      ],
+      include: includes,
+      group: groupBy,
       attributes: attributes,
     });
-
 
     return posts.map((post: any) => {
       return new PostResponseDTO(
         post.id,
         post.title,
         post.body,
-        post.user.name, 
-        post.user.id,
-        parseInt(post.getDataValue('likesAmount'), 10), 
-        userId ? post.getDataValue('isLiked') : false, 
-        userId ? post.user.id === userId : false, 
+        post.getDataValue('userName'),
+        post.userId,
+        parseInt(post.getDataValue('likesAmount'), 10),
+        parseInt(post.getDataValue('commentsAmount'), 10),
+        post.getDataValue('userPicture'),
+        userId ? post.getDataValue('isLiked') : false,
+        userId ? post.userId === userId : false,
       );
     });
   }
 
   async searchPosts(query: string, userId?: number): Promise<PostResponseDTO[]> {
     const attributes = this.getAttributes(userId);
+    const includes = this.getIncludes();
+    const groupBy = this.getGroupBy();
 
     const formattedQuery = query.split(/\s+/)
                                 .map((word) => word.replace(/'/g, "''"))
@@ -140,13 +143,9 @@ export class PostService {
 
     const posts = await this.postModel.findAll({
       where: Sequelize.literal(`"search_vector" @@ to_tsquery('simple', '${formattedQuery}') `),
-      attributes,
-      include: [
-        {
-          model: User,
-          attributes: ['id', 'name'],
-        },
-      ],
+      include: includes,
+      group: groupBy,
+      attributes: attributes,
     });
 
     return posts.map((post: any) => {
@@ -154,41 +153,70 @@ export class PostService {
         post.id,
         post.title,
         post.body,
-        post.user.name,
-        post.user.id,
+        post.getDataValue('userName'),
+        post.userId,
         parseInt(post.getDataValue('likesAmount'), 10),
+        parseInt(post.getDataValue('commentsAmount'), 10),
+        post.getDataValue('userPicture'),
         userId ? post.getDataValue('isLiked') : false,
-        userId ? post.user.id === userId : false,
+        userId ? post.userId === userId : false,
       );
     });
   }
 
   getAttributes(userId?: number): any[] {
     const attributes: any[] = [
-      "id",
-      "title",
-      "body",
-      [
-        Sequelize.literal(`(
-          SELECT COUNT(*)
-          FROM "Likes" l
-          WHERE l."postId" = "Post".id
-        )`),
-        "likesAmount",
-      ],
+      'id',
+      'body',
+      'title',
+      'userId',
+      [Sequelize.col('user.name'), 'userName'],
+      [Sequelize.col('user.picture'), 'userPicture'],
+      [Sequelize.fn('COUNT', Sequelize.literal('DISTINCT "likes"."id"')), 'likesAmount'],
+      [Sequelize.fn('COUNT', Sequelize.literal('DISTINCT "comments"."id"')), 'commentsAmount'],
     ];
   
     if (userId) {
       attributes.push([
         Sequelize.literal(`EXISTS (
-          SELECT 1
-          FROM "Likes" l
-          WHERE l."postId" = "Post".id AND l."userId" = ${userId}
+          SELECT 1 
+          FROM "Likes" AS l 
+          WHERE l."postId" = "Post"."id" AND l."userId" = ${userId}
         )`),
         "isLiked",
       ]);
     }
   
     return attributes;
+  }
+
+  getIncludes(): any[] {
+    const includes : any[] = [
+      {
+        model: User,
+        attributes: [], 
+      },
+      {
+        model: Like,
+        attributes: [],
+      },
+      {
+        model: Comment,
+        attributes: [],
+      }
+    ]
+    return includes;
+  }
+
+  getGroupBy() : any[] {
+    const groupBy : any[] = [
+      'Post.id',
+      'Post.body',
+      'Post.title',
+      'Post.userId',
+      'userName',
+      'userPicture'
+    ];
+    return groupBy;
   }
 }
