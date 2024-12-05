@@ -3,6 +3,7 @@ export class CommentResponseDTO {
   commentText: string;
   userId: number;
   userName: string;
+  authorPicture: string;
   isAuthor?: boolean = false; 
 
   constructor(
@@ -10,12 +11,14 @@ export class CommentResponseDTO {
     commentText: string,
     userId: number,
     userName: string,
+    authorPicture: string,
     isAuthor?: boolean,
   ) {
     this.id = id;
     this.commentText = commentText;
     this.userId = userId;
     this.userName = userName;
+    this.authorPicture = authorPicture;
     this.isAuthor = isAuthor ?? false;
   }
 }

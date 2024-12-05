@@ -20,13 +20,20 @@ export class UserController {
 
   @Get(':id')
   @UseGuards(OptionalJwtAuthGuard)
-  async findUser(@Req() req : Request, @Param('id') id: number): Promise<UserResponseDTO> {
+  async findUser(
+    @Req() req : Request, 
+    @Param('id') id: number
+  ): Promise<UserResponseDTO> {
     return this.userService.findUserById(id, req['user']?.userId);
   }
 
   @Put(':id')
   @UseGuards(JwtAuthGuard)
-  async update(@Req() req : Request, @Param('id') id: number, @Body() updateData: UpdateUserDto): Promise<UserResponseDTO> {
+  async update(
+    @Req() req : Request, 
+    @Param('id') id: number, 
+    @Body() updateData: UpdateUserDto
+  ): Promise<UserResponseDTO> {
     return this.userService.updateUser(id, req['user'].userId, updateData);
   }
 }

@@ -7,6 +7,7 @@ import { PostResponseDTO } from "src/post/dto/postResponseDTO.dto";
 import { Comment } from "src/comment/models/comment.model";
 import { User } from "src/user/models/user.model";
 import { Sequelize } from "sequelize-typescript";
+import { where } from "sequelize";
 
 
 @Injectable()
@@ -33,10 +34,10 @@ export class LikeService {
     }
   }
 
-  async remove(userId: number, id: number): Promise<void> {
-    const like = await this.likeModel.findByPk(id);
+  async remove(userId: number, postId: number): Promise<void> {
+    const like = await this.likeModel.findOne({where: {postId}});
     if (!like) {
-      throw new NotFoundException(`Like with ID ${id} not found`);
+      throw new NotFoundException(`Like with  not found`);
     }
 
     if (like.userId !== userId) {

@@ -164,6 +164,63 @@ export class PostService {
     });
   }
 
+  async findPopularPosts(userId?: number): Promise<PostResponseDTO[]> {
+    const attributes = this.getAttributes(userId);
+    const includes = this.getIncludes();
+    const groupBy = this.getGroupBy();
+  
+    const posts = await this.postModel.findAll({
+      include: includes,
+      group: groupBy,
+      attributes: attributes,
+      order: [[Sequelize.literal('"likesAmount"'), 'DESC']],
+    });
+  
+    return posts.map((post: any) => {
+      return new PostResponseDTO(
+        post.id,
+        post.title,
+        post.body,
+        post.getDataValue('userName'),
+        post.userId,
+        parseInt(post.getDataValue('likesAmount'), 10),
+        parseInt(post.getDataValue('commentsAmount'), 10),
+        post.getDataValue('userPicture'),
+        userId ? post.getDataValue('isLiked') : false,
+        userId ? post.userId === userId : false,
+      );
+    });
+  }
+  
+  async findNewestPosts(userId?: number): Promise<PostResponseDTO[]> {
+    const attributes = this.getAttributes(userId);
+    const includes = this.getIncludes();
+    const groupBy = this.getGroupBy();
+  
+    const posts = await this.postModel.findAll({
+      include: includes,
+      group: groupBy,
+      attributes: attributes,
+      order: [['createdAt', 'DESC']],
+    });
+  
+    return posts.map((post: any) => {
+      return new PostResponseDTO(
+        post.id,
+        post.title,
+        post.body,
+        post.getDataValue('userName'),
+        post.userId,
+        parseInt(post.getDataValue('likesAmount'), 10),
+        parseInt(post.getDataValue('commentsAmount'), 10),
+        post.getDataValue('userPicture'),
+        userId ? post.getDataValue('isLiked') : false,
+        userId ? post.userId === userId : false,
+      );
+    });
+  }
+  
+
   getAttributes(userId?: number): any[] {
     const attributes: any[] = [
       'id',

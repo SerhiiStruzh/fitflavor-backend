@@ -12,12 +12,25 @@ export class CommentService {
     private readonly commentModel: typeof Comment,
   ) {}
 
-  async createComment(userId: number, createCommentDto: CreateCommentDTO): Promise<Comment> {
+  async createComment(userId: number, createCommentDto: CreateCommentDTO): Promise<CommentResponseDTO> {
     const comment = await this.commentModel.create({
       userId,
       ...createCommentDto
     });
-    return comment;
+
+    const commentWithUser = await this.commentModel.findOne({
+      where: { id: comment.id },
+      include: [{ model: User }],
+    });
+
+    return new CommentResponseDTO(
+      commentWithUser.id,
+      commentWithUser.commentText,
+      commentWithUser.user.id,
+      commentWithUser.user.name,
+      commentWithUser.user.picture,
+      userId ? commentWithUser.userId === userId : false,
+    )
   }
 
   async deleteComment(commentId: number, userId: number): Promise<void> {
@@ -50,6 +63,7 @@ export class CommentService {
           comment.commentText,
           comment.user.id,
           comment.user.name,
+          comment.user.picture,
           userId ? comment.userId === userId : false,
         ),
     );

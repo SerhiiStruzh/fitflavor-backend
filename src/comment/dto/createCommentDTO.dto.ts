@@ -1,5 +1,5 @@
 
-import { IsInt, IsNotEmpty, IsString } from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, MaxLength } from 'class-validator';
 
 export class CreateCommentDTO {
   @IsInt()
@@ -7,6 +7,7 @@ export class CreateCommentDTO {
   postId: number;
 
   @IsString()
-  @IsNotEmpty()
+  @IsNotEmpty({ message: 'Comment text must not be empty' })
+  @MaxLength(200, { message: 'Comment text must not exceed 200 characters' })
   commentText: string;
 }

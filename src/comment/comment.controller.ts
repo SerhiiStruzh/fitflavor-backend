@@ -15,7 +15,7 @@ export class CommentController {
   async createComment(
     @Req() req: Request,
     @Body() createCommentDto: CreateCommentDTO,
-  ) {
+  ) : Promise<CommentResponseDTO> {
     return this.commentService.createComment(req['user'].userId, createCommentDto);
   }
 
@@ -30,7 +30,10 @@ export class CommentController {
 
   @Get('post/:postId')
   @UseGuards(OptionalJwtAuthGuard)
-  async getCommentsByPost(@Req() req: Request, @Param('postId') postId: number): Promise<CommentResponseDTO[]> {
+  async getCommentsByPost(
+    @Req() req: Request, 
+    @Param('postId') postId: number
+  ): Promise<CommentResponseDTO[]> {
     return this.commentService.getCommentsByPost(postId, req['user']?.userId);
   }
 }

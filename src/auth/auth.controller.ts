@@ -19,13 +19,19 @@ export class AuthController {
 
   @Get('google/redirect')
   @UseGuards(AuthGuard('google'))
-  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+  async googleAuthRedirect(
+    @Req() req, 
+    @Res() res: Response
+  ) {
     const {accessToken, refreshToken} = await this.authService.handleAuth(res, req.user.id);
     res.redirect(`${this.configService.get('frontend.base_url')}/auth/google?token=${accessToken}`);
   }
 
   @Post('refresh')
-  async refresh(@Req() req: Request, @Res() res: Response) {
+  async refresh(
+    @Req() req: Request, 
+    @Res() res: Response
+  ) {
     const oldRefreshToken = req.cookies['refreshToken'];
     if (!oldRefreshToken) {
       return res.status(HttpStatus.FORBIDDEN).json({ message: 'Refresh token not found' });
@@ -41,7 +47,10 @@ export class AuthController {
   }
 
   @Post('logout')
-  async logout(@Req() req: Request, @Res() res: Response) {
+  async logout(
+    @Req() req: Request, 
+    @Res() res: Response
+  ) {
     const refreshToken = req.cookies['refreshToken'];
     if (!refreshToken) {
       return res.status(HttpStatus.BAD_REQUEST).json({ message: 'No refresh token found' });
