@@ -35,9 +35,9 @@ export class LikeService {
   }
 
   async remove(userId: number, postId: number): Promise<void> {
-    const like = await this.likeModel.findOne({where: {postId}});
+    const like = await this.likeModel.findOne({where: {postId, userId}});
     if (!like) {
-      throw new NotFoundException(`Like with  not found`);
+      throw new NotFoundException(`Like with not found`);
     }
 
     if (like.userId !== userId) {
